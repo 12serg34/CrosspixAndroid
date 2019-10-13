@@ -18,11 +18,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
-            <TableLayout
-                android:id="@+id/topNumbersTable"
+            <LinearLayout
+                android:id="@+id/topNumbersLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"/>
+                android:layout_weight="1"
+                android:orientation="vertical" />
 
         </TableRow>
 
@@ -31,7 +32,7 @@
             android:layout_height="match_parent">
 
             <LinearLayout
-                android:id="@+id/leftNumbersTable"
+                android:id="@+id/leftNumbersLeyout"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:orientation="vertical" />
@@ -42,7 +43,7 @@
                 android:layout_weight="1">
 
                 <LinearLayout
-                    android:id="@+id/fieldTable"
+                    android:id="@+id/fieldLayout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="vertical" />
