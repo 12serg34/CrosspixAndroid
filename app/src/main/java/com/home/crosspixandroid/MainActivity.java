@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         stashedPicture = response.getStashedPicture();
+                        GameContext.stashedPicture = stashedPicture;
                         gameCreatedTextView.setText("game created " + stashedPicture);
                     }
                 });
