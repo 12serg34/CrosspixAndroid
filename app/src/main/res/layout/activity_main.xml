@@ -19,6 +19,14 @@
             android:layout_height="wrap_content"
             android:text="connect" />
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycleView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:animationCache="false"
+            android:scrollbars="vertical"
+            tools:itemCount="7" />
+
         <Button
             android:id="@+id/createGameButton"
             android:layout_width="match_parent"
@@ -32,6 +40,13 @@
             android:text="gameName"
             android:textAlignment="center" />
 
+        <Button
+            android:id="@+id/startGameButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onStartButtonClick"
+            android:text="start" />
+
         <TextView
             android:id="@+id/gameCreatedTextView"
             android:layout_width="match_parent"
@@ -39,12 +54,6 @@
             android:text="no game"
             android:textAlignment="center" />
 
-        <Button
-            android:id="@+id/startGameButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendMessage"
-            android:text="start" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

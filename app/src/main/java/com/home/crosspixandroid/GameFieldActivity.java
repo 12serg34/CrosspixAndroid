@@ -1,7 +1,10 @@
 package com.home.crosspixandroid;
 
 import android.annotation.SuppressLint;
+import android.graphics.Color;
+import android.graphics.Point;
 import android.os.Bundle;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -10,6 +13,13 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.EnumMap;
+import java.util.HashMap;
+
+import function.Consumer;
+import message.CellUpdatedNotification;
+import picture.Answer;
+import picture.CellState;
 import picture.Numbers;
 
 import static android.graphics.Color.GREEN;
@@ -21,13 +31,31 @@ import static picture.NumbersSide.TOP;
 
 @SuppressLint("SetTextI18n")
 public class GameFieldActivity extends AppCompatActivity {
+    private static final EnumMap<Answer, Integer> answerToColor;
+    private static final EnumMap<CellState, Integer> stateToColor;
+
+    static {
+        answerToColor = new EnumMap<>(Answer.class);
+        answerToColor.put(Answer.SUCCESS, Color.BLACK);
+        answerToColor.put(Answer.MISTAKE, Color.RED);
+        answerToColor.put(Answer.WAIT, Color.BLUE);
+
+        stateToColor = new EnumMap<>(CellState.class);
+        stateToColor.put(CellState.FULL, Color.BLACK);
+        stateToColor.put(CellState.BLANK, Color.WHITE);
+        stateToColor.put(CellState.EMPTY, Color.GRAY);
+    }
+
     private LinearLayout.LayoutParams cellLayoutParams;
+    private Button[][] cells;
+    private HashMap<Button, Point> cellToPointMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game_field);
 
+        GameContext.guessedPicture.setUpdatedCellListener(new CellUpdatesListener());
         cellLayoutParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT, 1);
@@ -92,13 +120,61 @@ public class GameFieldActivity extends AppCompatActivity {
         LinearLayout fieldTable = findViewById(R.id.fieldLayout);
         int height = GameContext.stashedPicture.getHeight();
         int width = GameContext.stashedPicture.getWidth();
+        cells = new Button[height][width];
+        cellToPointMap = new HashMap<>(height * width);
+        ButtonClickListener buttonClickListener = new ButtonClickListener();
+        ButtonLongClickListener buttonLongClickListener = new ButtonLongClickListener();
         for (int i = 0; i < height; i++) {
             LinearLayout rowLayout = new LinearLayout(this);
             rowLayout.setOrientation(HORIZONTAL);
             for (int j = 0; j < width; j++) {
-                rowLayout.addView(new Button(this), cellLayoutParams);
+                Button button = new Button(this);
+                button.setOnClickListener(buttonClickListener);
+                button.setOnLongClickListener(buttonLongClickListener);
+                cells[i][j] = button;
+                cellToPointMap.put(button, new Point(j, i));
+                rowLayout.addView(button, cellLayoutParams);
             }
             fieldTable.addView(rowLayout, cellLayoutParams);
+        }
+    }
+
+    private class ButtonClickListener implements View.OnClickListener {
+        @SuppressWarnings("ConstantConditions")
+        @Override
+        public void onClick(View v) {
+            @SuppressWarnings("SuspiciousMethodCalls") Point point = cellToPointMap.get(v);
+            Answer answer = GameContext.guessedPicture.discoverRequest(point.y, point.x);
+            if (answer != Answer.NOTHING) {
+                v.setBackgroundColor(answerToColor.get(answer));
+            }
+        }
+    }
+
+    private class ButtonLongClickListener implements View.OnLongClickListener {
+        @SuppressWarnings("ConstantConditions")
+        @Override
+        public boolean onLongClick(final View v) {
+            @SuppressWarnings("SuspiciousMethodCalls") final Point point = cellToPointMap.get(v);
+            CellState state = GameContext.guessedPicture.toggleEmpty(point.y, point.x);
+            v.setBackgroundColor(stateToColor.get(state));
+            return true;
+        }
+    }
+
+    private class CellUpdatesListener implements Consumer<CellUpdatedNotification> {
+        @SuppressWarnings("ConstantConditions")
+        @Override
+        public void accept(final CellUpdatedNotification notification) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    int i = notification.getI();
+                    int j = notification.getJ();
+                    Answer answer = notification.getAnswer();
+                    cells[i][j].setBackgroundColor(answerToColor.get(answer));
+                }
+            });
         }
     }
 }

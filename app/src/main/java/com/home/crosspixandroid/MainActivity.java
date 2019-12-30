@@ -3,33 +3,53 @@ package com.home.crosspixandroid;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import entities.GameInfo;
+import message.Message;
 import message.MessageListener;
 import message.MessageSender;
 import message.MessageService;
 import message.Notifier;
 import message.request.CreateGameRequest;
+import message.request.GamesInfoRequest;
 import message.response.GameCreatedResponse;
+import message.response.GamesInfoResponse;
 import message.response.PongResponse;
+import picture.MultiPlayerGuessedPicture;
 import picture.StashedPicture;
 
 public class MainActivity extends AppCompatActivity {
-
-    public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
-
     private MessageSender sender;
-    private StashedPicture stashedPicture;
+    private RecyclerView recyclerView;
+    private RecyclerView.Adapter recyclerViewAdapter;
+    private RecyclerView.LayoutManager layoutManager;
+    private List<String> gameNames;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        gameNames = new ArrayList<>();
+        recyclerView = findViewById(R.id.recycleView);
+        layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerViewAdapter = new MyRecycleViewAdapter(gameNames);
+        recyclerView.setAdapter(recyclerViewAdapter);
 
         final Button connectButton = findViewById(R.id.connectButton);
         final Notifier notifier = new Notifier();
@@ -40,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         connectButton.setBackgroundColor(Color.GREEN);
-//                        sender.send(GamesInfoRequest.getInstance());
+                        sender.send(GamesInfoRequest.getInstance());
                     }
                 });
             }
@@ -53,9 +73,27 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        stashedPicture = response.getStashedPicture();
+                        StashedPicture stashedPicture = response.getStashedPicture();
                         GameContext.stashedPicture = stashedPicture;
+                        GameContext.guessedPicture = new MultiPlayerGuessedPicture(stashedPicture,
+                                sender, notifier);
                         gameCreatedTextView.setText("game created " + stashedPicture);
+                    }
+                });
+                sender.send(GamesInfoRequest.getInstance());
+            }
+        });
+        notifier.subscribe(GamesInfoResponse.class, new MessageListener<GamesInfoResponse>() {
+            @Override
+            public void accept(final GamesInfoResponse response) {
+                gameNames.clear();
+                for (GameInfo info : response.getGamesInfo()) {
+                    gameNames.add(info.toString());
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        recyclerViewAdapter.notifyDataSetChanged();
                     }
                 });
             }
@@ -65,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 sender = MessageService.connect("crosspix.hopto.org", 14500, notifier);
+//                sender = MessageService.connect("192.168.43.7", 14500, notifier);
                 System.out.println("clicked");
             }
         });
@@ -79,11 +118,44 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void sendMessage(View view) {
-        Intent intent = new Intent(this, GameFieldActivity.class);
-//        EditText editText = (EditText) findViewById(R.id.editText);
-//        String message = editText.getText().toString();
-//        intent.putExtra(EXTRA_MESSAGE, message);
-        startActivity(intent);
+    public void onStartButtonClick(View view) {
+        startActivity(new Intent(this, GameFieldActivity.class));
+    }
+
+    private static class MyRecycleViewAdapter
+            extends RecyclerView.Adapter<MyRecycleViewAdapter.MyViewHolder> {
+        private List<String> dataSet;
+
+        public MyRecycleViewAdapter(List<String> dataSet) {
+            this.dataSet = dataSet;
+        }
+
+        @NonNull
+        @Override
+        public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            TextView textView = ((TextView) LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.my_text_view, parent, false));
+            return new MyViewHolder(textView);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+            holder.textView.setText(dataSet.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            int size = dataSet.size();
+            return size > 7 ? 7 : size;
+        }
+
+        public static class MyViewHolder extends RecyclerView.ViewHolder {
+            private TextView textView;
+
+            public MyViewHolder(@NonNull TextView itemView) {
+                super(itemView);
+                this.textView = itemView;
+            }
+        }
     }
 }
