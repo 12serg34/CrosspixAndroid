@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
     private MessageSender sender;
     private RecyclerView recyclerView;
     private RecyclerView.Adapter recyclerViewAdapter;
-    private RecyclerView.LayoutManager layoutManager;
     private List<String> gameNames;
 
     @Override
@@ -44,10 +43,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        gameNames = new ArrayList<>();
         recyclerView = findViewById(R.id.recycleView);
-        layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        gameNames = new ArrayList<>();
         recyclerViewAdapter = new MyRecycleViewAdapter(gameNames);
         recyclerView.setAdapter(recyclerViewAdapter);
 

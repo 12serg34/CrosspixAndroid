@@ -23,9 +23,8 @@
             android:id="@+id/recycleView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:animationCache="false"
-            android:scrollbars="vertical"
-            tools:itemCount="7" />
+            android:layout_weight="1"
+            android:scrollbars="vertical" />
 
         <Button
             android:id="@+id/createGameButton"
