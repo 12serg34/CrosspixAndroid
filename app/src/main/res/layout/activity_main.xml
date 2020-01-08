@@ -22,15 +22,17 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycleView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:scrollbars="vertical" />
+            android:scrollbars="vertical" >
+
+        </androidx.recyclerview.widget.RecyclerView>
 
         <Button
-            android:id="@+id/createGameButton"
+            android:id="@+id/joinGameButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="create game" />
+            android:text="join to game" />
 
         <EditText
             android:id="@+id/gameNameEditText"
@@ -40,18 +42,24 @@
             android:textAlignment="center" />
 
         <Button
+            android:id="@+id/createGameButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="create game" />
+
+        <TextView
+            android:id="@+id/selectedGameTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="no game"
+            android:textAlignment="center" />
+
+        <Button
             android:id="@+id/startGameButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="onStartButtonClick"
             android:text="start" />
-
-        <TextView
-            android:id="@+id/gameCreatedTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="no game"
-            android:textAlignment="center" />
 
     </LinearLayout>
 

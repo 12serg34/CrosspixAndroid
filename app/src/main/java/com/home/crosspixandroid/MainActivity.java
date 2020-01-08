@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final TextView gameCreatedTextView = findViewById(R.id.gameCreatedTextView);
+        final TextView gameCreatedTextView = findViewById(R.id.selectedGameTextView);
         notifier.subscribe(GameCreatedResponse.class, new MessageListener<GameCreatedResponse>() {
             @Override
             public void accept(final GameCreatedResponse response) {

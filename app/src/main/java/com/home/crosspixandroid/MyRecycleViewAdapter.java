@@ -13,6 +13,7 @@ import java.util.List;
 
 public class MyRecycleViewAdapter extends RecyclerView.Adapter<MyViewHolder> {
     private List<String> dataSet;
+    private View selectedView;
 
     MyRecycleViewAdapter(List<String> dataSet) {
         this.dataSet = dataSet;
@@ -28,6 +29,12 @@ public class MyRecycleViewAdapter extends RecyclerView.Adapter<MyViewHolder> {
             public void onClick(View v) {
                 Integer gameId = (Integer) v.getTag(R.id.game_id);
                 System.out.println("clicked on text view with game id = " + gameId);
+                if (selectedView != null) {
+                    selectedView.setSelected(false);
+                }
+                v.setSelected(true);
+                selectedView = v;
+                System.out.println(v.isSelected());
             }
         });
         return new MyViewHolder(textView);
