@@ -25,8 +25,7 @@ import message.request.GamesInfoRequest;
 import message.response.GameCreatedResponse;
 import message.response.GamesInfoResponse;
 import message.response.PongResponse;
-import picture.MultiPlayerGuessedPicture;
-import picture.StashedPicture;
+import pictures.GuessedPicture;
 
 public class MainActivity extends AppCompatActivity {
     private MessageSender sender;
@@ -47,6 +46,13 @@ public class MainActivity extends AppCompatActivity {
 
         final Button connectButton = findViewById(R.id.connectButton);
         final Notifier notifier = new Notifier();
+        connectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sender = MessageService.connect("crosspix.hopto.org", 14500, notifier);
+            }
+        });
+
         notifier.subscribe(PongResponse.class, new MessageListener<PongResponse>() {
             @Override
             public void accept(PongResponse pong) {
@@ -67,11 +73,11 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        StashedPicture stashedPicture = response.getStashedPicture();
-                        GameContext.stashedPicture = stashedPicture;
-                        GameContext.guessedPicture = new MultiPlayerGuessedPicture(stashedPicture,
+                        entities.GameContext context = response.getGameContext();
+                        GameContext.guessedPicture = new GuessedPicture(context.getField(),
                                 sender, notifier);
-                        gameCreatedTextView.setText("game created " + stashedPicture);
+                        GameContext.context = context;
+                        gameCreatedTextView.setText("game created");
                     }
                 });
                 sender.send(GamesInfoRequest.getInstance());
@@ -90,14 +96,6 @@ public class MainActivity extends AppCompatActivity {
                         recyclerViewAdapter.notifyDataSetChanged();
                     }
                 });
-            }
-        });
-
-        connectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-//                sender = MessageService.connect("crosspix.hopto.org", 14500, notifier);
-                sender = MessageService.connect("192.168.43.7", 14500, notifier);
             }
         });
 

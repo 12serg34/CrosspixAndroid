@@ -16,29 +16,27 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.EnumMap;
 import java.util.HashMap;
 
+import entities.Answer;
+import entities.CellState;
+import entities.Numbers;
 import function.Consumer;
 import message.CellUpdatedNotification;
-import picture.Answer;
-import picture.CellState;
-import picture.Numbers;
 
 import static android.graphics.Color.GREEN;
 import static android.view.Gravity.CENTER;
 import static android.view.View.TEXT_ALIGNMENT_CENTER;
 import static android.widget.LinearLayout.HORIZONTAL;
-import static picture.NumbersSide.LEFT;
-import static picture.NumbersSide.TOP;
 
 @SuppressLint("SetTextI18n")
 public class GameFieldActivity extends AppCompatActivity {
     private static final EnumMap<Answer, Integer> answerToColor;
     private static final EnumMap<CellState, Integer> stateToColor;
+    private static final int WAIT_COLOR = Color.BLUE;
 
     static {
         answerToColor = new EnumMap<>(Answer.class);
         answerToColor.put(Answer.SUCCESS, Color.BLACK);
         answerToColor.put(Answer.MISTAKE, Color.RED);
-        answerToColor.put(Answer.WAIT, Color.BLUE);
 
         stateToColor = new EnumMap<>(CellState.class);
         stateToColor.put(CellState.FULL, Color.BLACK);
@@ -66,7 +64,7 @@ public class GameFieldActivity extends AppCompatActivity {
 
     private void initLeftNumbersLayout() {
         LinearLayout leftNumbersLayout = findViewById(R.id.leftNumbersLeyout);
-        Numbers leftNumbers = new Numbers(GameContext.stashedPicture, LEFT);
+        Numbers leftNumbers = GameContext.context.getLeftNumbers();
         int depth = leftNumbers.getDepth();
         int size = leftNumbers.getSize();
         for (int i = 0; i < size; i++) {
@@ -90,7 +88,7 @@ public class GameFieldActivity extends AppCompatActivity {
 
     private void initTopNumbersLayout() {
         LinearLayout topNumbersLayout = findViewById(R.id.topNumbersLayout);
-        Numbers topNumbers = new Numbers(GameContext.stashedPicture, TOP);
+        Numbers topNumbers = GameContext.context.getTopNumbers();
         int depth = topNumbers.getDepth();
         LinearLayout[] rowLayouts = new LinearLayout[depth];
         for (int i = 0; i < depth; i++) {
@@ -118,8 +116,8 @@ public class GameFieldActivity extends AppCompatActivity {
 
     private void initFieldLayout() {
         LinearLayout fieldTable = findViewById(R.id.fieldLayout);
-        int height = GameContext.stashedPicture.getHeight();
-        int width = GameContext.stashedPicture.getWidth();
+        int height = GameContext.context.getLeftNumbers().getSize();
+        int width = GameContext.context.getTopNumbers().getSize();
         cells = new Button[height][width];
         cellToPointMap = new HashMap<>(height * width);
         ButtonClickListener buttonClickListener = new ButtonClickListener();
@@ -129,6 +127,7 @@ public class GameFieldActivity extends AppCompatActivity {
             rowLayout.setOrientation(HORIZONTAL);
             for (int j = 0; j < width; j++) {
                 Button button = new Button(this);
+                button.setBackgroundColor(stateToColor.get(GameContext.context.getField().getCellState(i, j)));
                 button.setOnClickListener(buttonClickListener);
                 button.setOnLongClickListener(buttonLongClickListener);
                 cells[i][j] = button;
@@ -144,9 +143,9 @@ public class GameFieldActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             @SuppressWarnings("SuspiciousMethodCalls") Point point = cellToPointMap.get(v);
-            Answer answer = GameContext.guessedPicture.discoverRequest(point.y, point.x);
-            if (answer != Answer.NOTHING) {
-                v.setBackgroundColor(answerToColor.get(answer));
+            if (GameContext.guessedPicture.getCellState(point.y, point.x) == CellState.BLANK) {
+                GameContext.guessedPicture.discoverRequest(point.y, point.x);
+                v.setBackgroundColor(WAIT_COLOR);
             }
         }
     }
@@ -169,10 +168,12 @@ public class GameFieldActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int i = notification.getI();
-                    int j = notification.getJ();
                     Answer answer = notification.getAnswer();
-                    cells[i][j].setBackgroundColor(answerToColor.get(answer));
+                    if (answer != Answer.NOTHING) {
+                        int i = notification.getI();
+                        int j = notification.getJ();
+                        cells[i][j].setBackgroundColor(answerToColor.get(answer));
+                    }
                 }
             });
         }

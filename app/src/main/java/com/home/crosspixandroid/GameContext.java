@@ -1,11 +1,10 @@
 package com.home.crosspixandroid;
 
-import picture.GuessedPicture;
-import picture.StashedPicture;
+import pictures.GuessedPicture;
 
-public class GameContext {
-    public static StashedPicture stashedPicture;
-    public static GuessedPicture guessedPicture;
+class GameContext {
+    static GuessedPicture guessedPicture;
+    static entities.GameContext context;
 
     private GameContext() {
 
