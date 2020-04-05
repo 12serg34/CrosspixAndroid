@@ -27,8 +27,6 @@ public class MyRecycleViewAdapter extends RecyclerView.Adapter<MyViewHolder> {
         textView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Integer gameId = (Integer) v.getTag(R.id.game_id);
-                System.out.println("clicked on text view with game id = " + gameId);
                 if (selectedView != null) {
                     selectedView.setSelected(false);
                 }
@@ -44,7 +42,11 @@ public class MyRecycleViewAdapter extends RecyclerView.Adapter<MyViewHolder> {
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         TextView textView = holder.getTextView();
         textView.setText(dataSet.get(position));
-        textView.setTag(R.id.game_id, position);
+        textView.setTag(R.id.position_in_game_list, position);
+    }
+
+    public int getSelectedPosition() {
+        return (Integer) selectedView.getTag(R.id.position_in_game_list);
     }
 
     @Override

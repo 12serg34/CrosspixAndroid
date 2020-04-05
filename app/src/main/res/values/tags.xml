@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="game_id" type="id" />
+    <item name="position_in_game_list" type="id" />
 </resources>

@@ -22,24 +22,28 @@ import message.MessageService;
 import message.Notifier;
 import message.request.CreateGameRequest;
 import message.request.GamesInfoRequest;
+import message.request.JoinToGameRequest;
 import message.response.GameCreatedResponse;
 import message.response.GamesInfoResponse;
+import message.response.JoinedToGameResponse;
 import message.response.PongResponse;
 import pictures.GuessedPicture;
 
 public class MainActivity extends AppCompatActivity {
     private MessageSender sender;
-    private RecyclerView.Adapter recyclerViewAdapter;
+    private MyRecycleViewAdapter recyclerViewAdapter;
     private List<String> gameNames;
+    private List<Integer> gamesId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        RecyclerView recyclerView = findViewById(R.id.recycleView);
+        final RecyclerView recyclerView = findViewById(R.id.recycleView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         gameNames = new ArrayList<>();
+        gamesId = new ArrayList<>();
 
         recyclerViewAdapter = new MyRecycleViewAdapter(gameNames);
         recyclerView.setAdapter(recyclerViewAdapter);
@@ -83,12 +87,29 @@ public class MainActivity extends AppCompatActivity {
                 sender.send(GamesInfoRequest.getInstance());
             }
         });
+        notifier.subscribe(JoinedToGameResponse.class, new MessageListener<JoinedToGameResponse>() {
+            @Override
+            public void accept(final JoinedToGameResponse response) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        entities.GameContext context = response.getGameContext();
+                        GameContext.guessedPicture = new GuessedPicture(context.getField(),
+                                sender, notifier);
+                        GameContext.context = context;
+                        gameCreatedTextView.setText("joined to game");
+                    }
+                });
+                sender.send(GamesInfoRequest.getInstance());
+            }
+        });
         notifier.subscribe(GamesInfoResponse.class, new MessageListener<GamesInfoResponse>() {
             @Override
             public void accept(final GamesInfoResponse response) {
                 gameNames.clear();
                 for (GameInfo info : response.getGamesInfo()) {
                     gameNames.add(info.toString());
+                    gamesId.add(info.getId());
                 }
                 runOnUiThread(new Runnable() {
                     @Override
@@ -105,6 +126,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 sender.send(new CreateGameRequest(gameNameEditText.getText().toString()));
+            }
+        });
+
+        final Button joinToGameButton = findViewById(R.id.joinGameButton);
+        joinToGameButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Integer gameId = gamesId.get(recyclerViewAdapter.getSelectedPosition());
+                sender.send(new JoinToGameRequest(gameId));
             }
         });
     }
