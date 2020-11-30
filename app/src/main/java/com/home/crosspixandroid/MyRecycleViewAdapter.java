@@ -11,11 +11,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+import entities.GameInfo;
+
 public class MyRecycleViewAdapter extends RecyclerView.Adapter<MyViewHolder> {
-    private List<String> dataSet;
+    private List<GameInfo> dataSet;
     private View selectedView;
 
-    MyRecycleViewAdapter(List<String> dataSet) {
+    MyRecycleViewAdapter(List<GameInfo> dataSet) {
         this.dataSet = dataSet;
     }
 
@@ -41,7 +43,8 @@ public class MyRecycleViewAdapter extends RecyclerView.Adapter<MyViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         TextView textView = holder.getTextView();
-        textView.setText(dataSet.get(position));
+        GameInfo gameInfo = dataSet.get(position);
+        textView.setText(gameInfo.toString());
         textView.setTag(R.id.position_in_game_list, position);
     }
 

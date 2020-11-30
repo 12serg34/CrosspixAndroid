@@ -1,11 +1,13 @@
 package com.home.crosspixandroid;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,33 +32,37 @@ import message.response.PongResponse;
 import pictures.GuessedPicture;
 
 public class MainActivity extends AppCompatActivity {
+    private Notifier notifier;
     private MessageSender sender;
+    private List<GameInfo> gamesInfo;
+
     private MyRecycleViewAdapter recyclerViewAdapter;
-    private List<String> gameNames;
-    private List<Integer> gamesId;
+    private Resources resources;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        resources = getResources();
 
         final RecyclerView recyclerView = findViewById(R.id.recycleView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        gameNames = new ArrayList<>();
-        gamesId = new ArrayList<>();
+        gamesInfo = new ArrayList<>();
 
-        recyclerViewAdapter = new MyRecycleViewAdapter(gameNames);
+        recyclerViewAdapter = new MyRecycleViewAdapter(gamesInfo);
         recyclerView.setAdapter(recyclerViewAdapter);
 
-        final Button connectButton = findViewById(R.id.connectButton);
-        final Notifier notifier = new Notifier();
-        connectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sender = MessageService.connect("crosspix.hopto.org", 14500, notifier);
-            }
-        });
+        int fieldInitialSize = resources.getInteger(R.integer.field_initial_size);
+        SeekBar seekBar = findViewById(R.id.fieldSizeSeekBar);
+        seekBar.setMax(resources.getInteger(R.integer.field_max_size) - resources.getInteger(R.integer.field_min_size));
+        seekBar.setProgress(fieldInitialSize - resources.getInteger(R.integer.field_min_size));
+        seekBar.setOnSeekBarChangeListener(this.new FieldSizeSeekBarListener());
 
+        TextView fieldSizeTextView = findViewById(R.id.fieldSizeTextView);
+        fieldSizeTextView.setText(String.valueOf(fieldInitialSize));
+
+        notifier = new Notifier();
+        final Button connectButton = findViewById(R.id.connectButton);
         notifier.subscribe(PongResponse.class, new MessageListener<PongResponse>() {
             @Override
             public void accept(PongResponse pong) {
@@ -69,8 +75,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
-
-        final TextView gameCreatedTextView = findViewById(R.id.selectedGameTextView);
         notifier.subscribe(GameCreatedResponse.class, new MessageListener<GameCreatedResponse>() {
             @Override
             public void accept(final GameCreatedResponse response) {
@@ -81,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
                         GameContext.guessedPicture = new GuessedPicture(context.getField(),
                                 sender, notifier);
                         GameContext.context = context;
-                        gameCreatedTextView.setText("game created");
+                        startGame();
                     }
                 });
                 sender.send(GamesInfoRequest.getInstance());
@@ -97,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                         GameContext.guessedPicture = new GuessedPicture(context.getField(),
                                 sender, notifier);
                         GameContext.context = context;
-                        gameCreatedTextView.setText("joined to game");
+                        startGame();
                     }
                 });
                 sender.send(GamesInfoRequest.getInstance());
@@ -106,11 +110,8 @@ public class MainActivity extends AppCompatActivity {
         notifier.subscribe(GamesInfoResponse.class, new MessageListener<GamesInfoResponse>() {
             @Override
             public void accept(final GamesInfoResponse response) {
-                gameNames.clear();
-                for (GameInfo info : response.getGamesInfo()) {
-                    gameNames.add(info.toString());
-                    gamesId.add(info.getId());
-                }
+                gamesInfo.clear();
+                gamesInfo.addAll(response.getGamesInfo());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -119,27 +120,55 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
-
-        final Button createGameButton = findViewById(R.id.createGameButton);
-        final EditText gameNameEditText = findViewById(R.id.gameNameEditText);
-        createGameButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sender.send(new CreateGameRequest(gameNameEditText.getText().toString()));
-            }
-        });
-
-        final Button joinToGameButton = findViewById(R.id.joinGameButton);
-        joinToGameButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Integer gameId = gamesId.get(recyclerViewAdapter.getSelectedPosition());
-                sender.send(new JoinToGameRequest(gameId));
-            }
-        });
     }
 
-    public void onStartButtonClick(View view) {
-        startActivity(new Intent(this, GameFieldActivity.class));
+    public void onConnectButtonClick(View view) {
+        sender = MessageService.connect("crosspix.hopto.org", 14500, notifier);
+    }
+
+    public void onRefreshGameListButtonClick(View view) {
+        sender.send(GamesInfoRequest.getInstance());
+    }
+
+    public void onJoinToGameButtonClick(View view) {
+        int selectedPosition = recyclerViewAdapter.getSelectedPosition();
+        int gameId = gamesInfo.get(selectedPosition).getId();
+        sender.send(new JoinToGameRequest(gameId));
+    }
+
+    public void onCreateGameButtonClick(View view) {
+        EditText gameNameEditText = findViewById(R.id.gameNameEditText);
+        String gameName = gameNameEditText.getText().toString();
+        SeekBar fieldSizeSeekBar = findViewById(R.id.fieldSizeSeekBar);
+        int fieldSize = calcFieldSize(fieldSizeSeekBar.getProgress());
+        sender.send(new CreateGameRequest(gameName, fieldSize, fieldSize));
+    }
+
+    public void startGame() {
+        Intent intent = new Intent(this, GameFieldActivity.class);
+        startActivity(intent);
+    }
+
+    class FieldSizeSeekBarListener implements SeekBar.OnSeekBarChangeListener {
+
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+            TextView fieldSizeTextView = findViewById(R.id.fieldSizeTextView);
+            String offsetSize = String.valueOf(calcFieldSize(i));
+            fieldSizeTextView.setText(offsetSize);
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+        }
+
+    }
+
+    private int calcFieldSize(int progress) {
+        return progress + resources.getInteger(R.integer.field_min_size);
     }
 }

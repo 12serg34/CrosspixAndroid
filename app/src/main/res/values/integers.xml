@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="field_min_size">5</integer>
+    <integer name="field_initial_size">10</integer>
+    <integer name="field_max_size">20</integer>
+</resources>

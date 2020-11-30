@@ -17,21 +17,28 @@
             android:id="@+id/connectButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="onConnectButtonClick"
             android:text="connect" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycleView"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:scrollbars="vertical" >
+            android:scrollbars="vertical" />
 
-        </androidx.recyclerview.widget.RecyclerView>
+        <Button
+            android:id="@+id/refreshGameListButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onRefreshGameListButtonClick"
+            android:text="refresh game list" />
 
         <Button
             android:id="@+id/joinGameButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="onJoinToGameButtonClick"
             android:text="join to game" />
 
         <EditText
@@ -41,25 +48,36 @@
             android:text="gameName"
             android:textAlignment="center" />
 
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <SeekBar
+                android:id="@+id/fieldSizeSeekBar"
+                style="@style/Widget.AppCompat.SeekBar.Discrete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="15"
+                android:progress="5" />
+
+            <TextView
+                android:id="@+id/fieldSizeTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="5"
+                android:text="10"
+                android:textAlignment="center" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/createGameButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="onCreateGameButtonClick"
             android:text="create game" />
-
-        <TextView
-            android:id="@+id/selectedGameTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="no game"
-            android:textAlignment="center" />
-
-        <Button
-            android:id="@+id/startGameButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="onStartButtonClick"
-            android:text="start" />
 
     </LinearLayout>
 

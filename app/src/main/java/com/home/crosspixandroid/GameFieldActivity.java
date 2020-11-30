@@ -127,7 +127,9 @@ public class GameFieldActivity extends AppCompatActivity {
             rowLayout.setOrientation(HORIZONTAL);
             for (int j = 0; j < width; j++) {
                 Button button = new Button(this);
+                button.setBackground(getDrawable(R.drawable.field_button));
                 button.setBackgroundColor(stateToColor.get(GameContext.context.getField().getCellState(i, j)));
+
                 button.setOnClickListener(buttonClickListener);
                 button.setOnLongClickListener(buttonLongClickListener);
                 cells[i][j] = button;
