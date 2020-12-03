@@ -1,7 +1,7 @@
 package com.home.crosspixandroid;
 
 import android.annotation.SuppressLint;
-import android.graphics.Color;
+import android.content.res.Resources;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.view.View;
@@ -29,29 +29,33 @@ import static android.widget.LinearLayout.HORIZONTAL;
 
 @SuppressLint("SetTextI18n")
 public class GameFieldActivity extends AppCompatActivity {
-    private static final EnumMap<Answer, Integer> answerToColor;
-    private static final EnumMap<CellState, Integer> stateToColor;
-    private static final int WAIT_COLOR = Color.BLUE;
+    private static final EnumMap<Answer, Integer> answerToBackground;
+    private static final EnumMap<CellState, Integer> stateToBackground;
 
     static {
-        answerToColor = new EnumMap<>(Answer.class);
-        answerToColor.put(Answer.SUCCESS, Color.BLACK);
-        answerToColor.put(Answer.MISTAKE, Color.RED);
+        answerToBackground = new EnumMap<>(Answer.class);
+        answerToBackground.put(Answer.SUCCESS, R.drawable.field_button_full);
+        answerToBackground.put(Answer.MISTAKE, R.drawable.field_button_mistake);
 
-        stateToColor = new EnumMap<>(CellState.class);
-        stateToColor.put(CellState.FULL, Color.BLACK);
-        stateToColor.put(CellState.BLANK, Color.WHITE);
-        stateToColor.put(CellState.EMPTY, Color.GRAY);
+        stateToBackground = new EnumMap<>(CellState.class);
+        stateToBackground.put(CellState.FULL, R.drawable.field_button_full);
+        stateToBackground.put(CellState.BLANK, R.drawable.field_button_blank);
+        stateToBackground.put(CellState.EMPTY, R.drawable.field_button_empty);
     }
 
     private LinearLayout.LayoutParams cellLayoutParams;
     private Button[][] cells;
     private HashMap<Button, Point> cellToPointMap;
+    private int waitingColor;
+    private Resources resources;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game_field);
+
+        resources = getResources();
+        waitingColor = resources.getColor(R.color.waiting_color, getTheme());
 
         GameContext.guessedPicture.setUpdatedCellListener(new CellUpdatesListener());
         cellLayoutParams = new LinearLayout.LayoutParams(
@@ -115,28 +119,58 @@ public class GameFieldActivity extends AppCompatActivity {
     }
 
     private void initFieldLayout() {
-        LinearLayout fieldTable = findViewById(R.id.fieldLayout);
+        LinearLayout fieldLayout = findViewById(R.id.field_layout);
         int height = GameContext.context.getLeftNumbers().getSize();
         int width = GameContext.context.getTopNumbers().getSize();
+
+        int groupBy = 5;
+        int verticalGroups = (int) Math.ceil(1.0 * height / groupBy);
+        int horizontalGroups = (int) Math.ceil(1.0 * width / groupBy);
+
         cells = new Button[height][width];
         cellToPointMap = new HashMap<>(height * width);
+
         ButtonClickListener buttonClickListener = new ButtonClickListener();
         ButtonLongClickListener buttonLongClickListener = new ButtonLongClickListener();
-        for (int i = 0; i < height; i++) {
-            LinearLayout rowLayout = new LinearLayout(this);
-            rowLayout.setOrientation(HORIZONTAL);
-            for (int j = 0; j < width; j++) {
-                Button button = new Button(this);
-                button.setBackground(getDrawable(R.drawable.field_button));
-                button.setBackgroundColor(stateToColor.get(GameContext.context.getField().getCellState(i, j)));
 
-                button.setOnClickListener(buttonClickListener);
-                button.setOnLongClickListener(buttonLongClickListener);
-                cells[i][j] = button;
-                cellToPointMap.put(button, new Point(j, i));
-                rowLayout.addView(button, cellLayoutParams);
+        for (int groupI = 0; groupI < verticalGroups; groupI++) {
+            int groupHeight = Math.min((groupI + 1) * groupBy, height) - groupI * groupBy;
+            LinearLayout rowOfGroups = new LinearLayout(this);
+            rowOfGroups.setOrientation(HORIZONTAL);
+            for (int groupJ = 0; groupJ < horizontalGroups; groupJ++) {
+                int groupWidth = Math.min((groupJ + 1) * groupBy, width) - groupJ * groupBy;
+                LinearLayout group = new LinearLayout(this);
+                group.setOrientation(LinearLayout.VERTICAL);
+                group.setForeground(resources.getDrawable(R.drawable.field_group, getTheme()));
+                for (int i = 0; i < groupHeight; i++) {
+                    LinearLayout row = new LinearLayout(this);
+                    row.setOrientation(HORIZONTAL);
+                    for (int j = 0; j < groupWidth; j++) {
+                        int cellI = groupI * groupBy + i;
+                        int cellJ = groupJ * groupBy + j;
+
+                        Button button = new Button(this);
+                        CellState state = GameContext.context.getField().getCellState(cellI, cellJ);
+                        Integer background = stateToBackground.get(state);
+                        button.setBackgroundResource(background);
+                        button.setOnClickListener(buttonClickListener);
+                        button.setOnLongClickListener(buttonLongClickListener);
+
+                        cells[cellI][cellJ] = button;
+                        cellToPointMap.put(button, new Point(cellJ, cellI));
+                        row.addView(button, cellLayoutParams);
+                    }
+                    group.addView(row, cellLayoutParams);
+                }
+                rowOfGroups.addView(group, new LinearLayout.LayoutParams(
+                        0,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        groupWidth));
             }
-            fieldTable.addView(rowLayout, cellLayoutParams);
+            fieldLayout.addView(rowOfGroups, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    0,
+                    groupHeight));
         }
     }
 
@@ -147,7 +181,7 @@ public class GameFieldActivity extends AppCompatActivity {
             @SuppressWarnings("SuspiciousMethodCalls") Point point = cellToPointMap.get(v);
             if (GameContext.guessedPicture.getCellState(point.y, point.x) == CellState.BLANK) {
                 GameContext.guessedPicture.discoverRequest(point.y, point.x);
-                v.setBackgroundColor(WAIT_COLOR);
+                v.setBackgroundColor(waitingColor);
             }
         }
     }
@@ -158,7 +192,7 @@ public class GameFieldActivity extends AppCompatActivity {
         public boolean onLongClick(final View v) {
             @SuppressWarnings("SuspiciousMethodCalls") final Point point = cellToPointMap.get(v);
             CellState state = GameContext.guessedPicture.toggleEmpty(point.y, point.x);
-            v.setBackgroundColor(stateToColor.get(state));
+            v.setBackgroundResource(stateToBackground.get(state));
             return true;
         }
     }
@@ -174,7 +208,8 @@ public class GameFieldActivity extends AppCompatActivity {
                     if (answer != Answer.NOTHING) {
                         int i = notification.getI();
                         int j = notification.getJ();
-                        cells[i][j].setBackgroundColor(answerToColor.get(answer));
+                        Integer background = answerToBackground.get(answer);
+                        cells[i][j].setBackgroundResource(background);
                     }
                 }
             });
